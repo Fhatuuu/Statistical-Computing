@@ -1,0 +1,97 @@
+---
+title: "Prac Three"
+institute: "Department of Statistical Sciences, University of Cape Town"
+date: last-modified
+format: 
+  html:
+    theme: cyborg
+    toc: true
+date-format: MMMM YYYY
+execute: 
+  eval: true
+number-sections: true
+embed-resources: true
+---
+
+# Practical Three
+
+## Plot curve / function
+
+Plot the function $f(x) = \sin(x)$ for $x \in [-2, 2]$.
+
+```{r}
+plot(sin, -2, 2)
+
+```
+
+## QQ-plot
+
+Generate 1000 values from a $t$-distribution with 1 degree of freedom.
+
+Construct a QQ-plot with 95% probability bands (envelopes) to check whether the above values come from a standard normal distribution. You can only use use `rnorm()`, but not `qnorm`, `dnorm`, `pnorm`, or R's qqplot functions.
+
+```{r}
+#step 1: generate random values from t-dist w/ 1 dof
+set.seed(2025)
+n = 1000
+t.samples <- rt(n, df = 1)
+t.sorted <- sort(t.samples)
+
+# Plotting positionn
+plot_pos <- (1: n - 0.5) / n
+
+
+# step 2: simulate normal samples.
+m = 100000
+norm.samples <- sort(rnorm(m))
+
+# Approximating theoretical quantiles
+theoretical_q <- norm.samples[ceiling(plot_pos * m)]
+
+# Function to calculate the normal pdf 
+
+norm_pdf <- function(z_vals) {
+  
+  (1 / sqrt(2 * pi) * exp(-z_vals^2 / 2))
+  
+}
+
+se <- sqrt(plot_pos * (1 - plot_pos)) / (sqrt(n) * norm_pdf(theoretical_q))
+
+# 95% envelopes
+alpha <- 1.96
+lower <- theoretical_q + alpha * se
+upper <- theoretical_q - alpha * se
+
+
+```
+
+Now that we got our samples and envelopes, we're going to plot the t-values and then fit a straight line for the normals
+
+```{r}
+plot( theoretical_q, t.sorted,
+      pch = 20, cex = 0.6,
+      xlab = "Theoretical Normal Quantiles",
+      ylab = "Sample Quantiles (t w/ df = 1)",
+      main = "Normal QQ Plot w/ 95% Envelopes",
+      ylim = c(-5, 5)
+      )
+
+lines(theoretical_q, lower, col = "red", lwd = 2)
+lines(theoretical_q, upper, col = "red", lwd = 2)
+abline(0, 1,col = "blue" ,lwd = 2)
+
+```
+
+### Checking solution using the car library
+
+```{r}
+#| message: false
+#| warning: false
+library(car)
+set.seed(2025)
+x <- rt(1000, df =1)
+qqPlot(x, envelope = 0.95, ylim = c(-5, 5))
+```
+
+That's it.

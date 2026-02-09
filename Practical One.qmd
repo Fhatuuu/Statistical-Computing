@@ -1,0 +1,139 @@
+---
+format: 
+  html: 
+    theme: cyborg
+    toc: true
+    toc-depth: 3
+---
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+library(glue)
+
+```
+
+# **Practical One**
+
+Fhatuwani Mokwenda
+
+## **Part One**
+
+```{r}
+df <- airquality
+```
+
+Checking for nulls
+
+```{r}
+NaR = c()
+for (rows in 1:nrow(df)){
+  
+  for (cols in 1: ncol(df)){
+    
+    if (is.na(df[rows, cols])){
+      NaR <- c(NaR, rows)
+      
+    }
+  }
+  
+}
+print(NaR)
+```
+
+## **Part Two**
+
+Finding the mean, sd, min and, max of the Temperature and Ozone
+
+### **1. Looking at Temperature**
+
+#### Mean
+
+```{r}
+mean(df$Temp)
+
+```
+
+#### Standard Deviation
+
+```{r}
+sd(df$Temp)
+
+```
+
+#### Min and Max
+
+Note: Using Glue library for easy "fstrings"
+
+```{r}
+min = min(df$Temp)
+max = max(df$Temp)
+
+glue("max = {max}")
+glue("min = {min}")
+```
+
+### **2. Looking at Ozone**
+
+Have to remove NA rows first from df
+
+```{r}
+new.df <- df[-NaR,]
+
+```
+
+#### Mean
+
+```{r}
+mean(new.df$Ozone)
+```
+
+#### Standard Deviation
+
+```{r}
+sd(new.df$Ozone)
+```
+
+#### Min and Max
+
+Note: Using Glue library for easy "fstrings"
+
+```{r}
+min = min(new.df$Ozone)
+max = max(new.df$Ozone)
+
+glue("max = {max}")
+glue("min = {min}")
+```
+
+## **Part Three**
+
+Linear regression, but instead of using lm()... we're using vector calculations!!!
+
+```{r}
+# predictor X -- no intercepts
+x <- as.matrix(cars$speed)
+# response Y
+y <- as.matrix(cars$dist)
+
+# Add a column of 1s to the predictor
+X <- cbind(1, x)
+
+# beta calculation
+beta_hat <- solve(t(X) %*% X) %*% t(X) %*% y
+beta_hat
+
+```
+
+## Part Four
+
+Checking **Part Three**
+
+```{r}
+coef(lm(dist~speed, data = cars))
+```
+
+We get the same thing !!!!!!!!
+
+Thats it.

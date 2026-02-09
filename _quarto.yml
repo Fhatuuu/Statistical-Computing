@@ -1,0 +1,26 @@
+project:
+  type: website
+
+website:
+  title: "Peer Assignment 1"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: Practical One.qmd
+        text: Practical One
+      - href: Prac Three.qmd
+        text: Practical Three
+      - href: Practical Four.qmd
+        text: Practical Four
+
+format:
+  html:
+    theme:
+      - cyborg
+      - brand
+    css: styles.css
+    toc: true
+
+editor: visual
+

@@ -1,0 +1,201 @@
+---
+title: "Practical Four"
+author: Fhatuwani Mokwenda
+format: 
+  html:
+    theme: cyborg
+    toc: true
+editor: visual
+---
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+library(dplyr)
+library(tidyr)
+library(nycflights13)
+```
+
+## Question One
+
+Displaying the flights dataset.
+
+```{r}
+# Note -- already a tibble object so no need to convert!
+data <- flights
+class(data)
+```
+
+Showing the flights data:
+
+```{r}
+data
+```
+
+## Question Two
+
+### Understanding this code cause wth...
+
+```{r}
+flight1 <- flights[flights$month == 1, ]
+carrier_vec <- unique(flight1$carrier)
+
+carrier_dist_vec_mean <- numeric(length(carrier_vec))
+carrier_dist_vec_sd <- numeric(length(carrier_vec))
+for (i in seq_along(carrier_vec)) {
+  carrier_dist_vec_mean[i] <- mean(
+    flight1$distance[flight1$carrier == carrier_vec[i]]
+   )
+  carrier_dist_vec_sd[i] <- sd(
+    flight1$distance[flight1$carrier == carrier_vec[i]]
+  )
+}
+dist_tbl <- tibble(
+  carrier = carrier_vec,
+  mean_distance = carrier_dist_vec_mean,
+  sd_distance = carrier_dist_vec_sd
+)
+dist_tbl[order(dist_tbl$mean_distance), ]
+```
+
+**What this code actually does:**
+
+1.  flights1 is columns wherein month is = 1
+
+2.  carries_vec is a vector of all flight carriers in month 1
+
+3.  for loop: essentially for each of the unique carries, calculate the mean and standard deviation and store them in carrier_dist_vec_mean/sd respectively
+
+4.  the a tibble object is made where it is a matrix(IG) with columns carrier, mean_distance &, sd_distance
+
+5.  final line is ordering the data by an ascending order of the means.
+
+### Writing the above code using dplyr
+
+```{r}
+data |> 
+  filter(month == 1) |> 
+  group_by(carrier) |> 
+  summarise( mean_distance = mean(distance, na.rm = TRUE),
+             sd_distance = sd(distance, na.rm = TRUE)) |> 
+  arrange(mean_distance)
+```
+
+## Question Three
+
+### Why is the sd for the carrier **OO** equals to NA?
+
+Off of the formula for standard deviation: $$ sd = \sqrt{\frac{1}{n-1}\sum_{i=1}^n (x_i - \bar{x})^2}$$ If the carrier **OO** has fewer than 2 observations, then the function is undefined:
+
+```{r}
+data |> 
+  filter(carrier == "OO", month == 1)
+```
+
+So this carrier has one observation!! Thus it does not have any deviation for the month 1.
+
+## Question Four
+
+Calculating the average departure delay of each carrier in each month
+
+```{r}
+data |> 
+  group_by(month, carrier) |> 
+  summarise(
+    dep_delay_mean = mean(dep_delay, na.rm = TRUE), .groups = "drop" ) |>
+  pivot_wider(
+    names_from = carrier,
+    values_from = dep_delay_mean
+  )
+  
+  
+```
+
+## Question Five
+
+Calculating the proportion of flights that were delayed but still arrived on time or earlier.
+
+```{r}
+data |> 
+  summarise(
+    not_late_flights = sum(dep_delay > 0 & arr_delay <= 0, na.rm = TRUE) / n()
+  )
+```
+
+## Question Six
+
+Working with the **airlines** and **flights** datasets
+
+```{r}
+air_data <- airlines
+air_data
+```
+
+### Identifying routes that more than one airline flies
+
+```{r}
+# join the two datasets 
+full_data <-full_join(data, air_data, by = "carrier" )
+
+# getting origin & destination wherein more than one carrier flies
+multi_carrier_routes <- data |> 
+  group_by(origin, dest) |> 
+  filter(n_distinct(carrier) > 1)
+multi_carrier_routes
+```
+
+### Calculating the avg arrival delay for each airline
+
+Using *multi_carrier_routes*
+
+```{r}
+summary_routes <- multi_carrier_routes |> 
+  group_by(origin, dest, carrier) |> 
+  summarise(
+    avg_delay = mean(arr_delay, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  arrange(avg_delay)
+
+summary_routes
+```
+
+### Who's the best and, who is the worst?
+
+I added a delay_difference column so I don't have to repeat this entire thing in step 7
+
+```{r}
+best_worst_carrier <- summary_routes |> 
+  group_by(origin, dest) |> 
+  summarise(
+    best_carrier = carrier[which.min(avg_delay)],
+    best_arr_delay = min(avg_delay),
+    worst_carrier = carrier[which.max(avg_delay)],
+    worst_arr_delay = max(avg_delay),
+    delay_diff = worst_arr_delay - best_arr_delay, # difference
+    .groups = "drop"
+  )
+best_worst_carrier
+```
+
+### Calculating differences
+
+```{r}
+best_worst_carrier |> 
+  slice_max(delay_diff, n = 1, with_ties = FALSE)
+```
+### Why the difference?
+The worst performing airline on route JKF to ATL is EV, while the best performing is 9E.
+
+The difference in the arrival delay could be because of the times in which these flights are scheduled for each airline.
+```{r}
+full_data |> 
+  filter(origin == "JFK", dest == "ATL")
+```
+
+
+
+## Question Seven
+
+That's it.
